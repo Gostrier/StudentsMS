@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student records</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F3F5F4;
+    --surface: #FFFFFF;
+    --ink: #1B2A2F;
+    --muted: #5B6B70;
+    --line: #D5DCDA;
+    --accent: #1F5C4A;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E0EEE8;
+    --warn: #8A4B00;
+    --warn-soft: #FBEBD0;
+    --danger: #A3261F;
+    --focus: #0B57D0;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #12191B;
+      --surface: #1A2427;
+      --ink: #E6EEEC;
+      --muted: #9AAAAE;
+      --line: #2E3C40;
+      --accent: #6FCBA9;
+      --accent-ink: #0C1F18;
+      --accent-soft: #1E3A31;
+      --warn: #F2B866;
+      --warn-soft: #3A2B12;
+      --danger: #F2958F;
+      --focus: #8AB4F8;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 16px/1.5 "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 32px 20px 64px; }
+
+  .top { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: 2rem; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; }
+  .sub { margin: 4px 0 0; color: var(--muted); }
+
+  button { font: inherit; cursor: pointer; }
+  .btn {
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    padding: 9px 16px; border-radius: 6px; font-weight: 500;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.small { padding: 5px 10px; font-size: .875rem; }
+  .btn.danger { color: var(--danger); }
+
+  .stats {
+    display: flex; flex-wrap: wrap; margin: 28px 0 24px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  }
+  .stat { flex: 1 1 160px; padding: 16px 20px; border-left: 1px solid var(--line); }
+  .stat:first-child { border-left: 0; }
+  .stat dt { color: var(--muted); font-size: .875rem; }
+  .stat dd { margin: 2px 0 0; font-size: 1.75rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stats dl { display: contents; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  .toolbar { display: flex; gap: 12px; flex-wrap: wrap; padding: 14px; border-bottom: 1px solid var(--line); }
+  input, select {
+    font: inherit; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+  }
+  .toolbar input { flex: 1 1 220px; }
+
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 760px; }
+  th { text-align: left; font-weight: 600; font-size: .875rem; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .adm { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .name { font-weight: 600; }
+
+  .grade { display: inline-block; min-width: 2em; text-align: center; font-weight: 700; }
+  .grade.F { color: var(--danger); }
+
+  .status {
+    border: 1px solid transparent; border-radius: 999px; padding: 3px 12px; font-size: .875rem; font-weight: 500;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .status[aria-pressed="false"] { background: var(--warn-soft); color: var(--warn); }
+  .status:hover { border-color: currentColor; }
+  .actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+  .empty { padding: 48px 20px; text-align: center; color: var(--muted); }
+  .empty p { margin: 0 0 14px; }
+
+  .side { padding: 18px; }
+  .side h2 { margin: 0 0 4px; font-size: 1.125rem; }
+  .side p { margin: 0 0 12px; color: var(--muted); font-size: .9375rem; }
+  .side label { display: block; font-weight: 500; margin-bottom: 4px; }
+  .side input { width: 100%; margin-bottom: 10px; }
+  .result { margin-top: 14px; font-size: 1.25rem; font-weight: 600; min-height: 1.5em; }
+  .scale { margin: 18px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); }
+  .scale h3 { margin: 0 0 6px; font-size: .9375rem; }
+  .scale dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 16px; margin: 0; font-variant-numeric: tabular-nums; }
+  .scale dt { font-weight: 600; }
+  .scale dd { margin: 0; text-align: right; }
+
+  dialog {
+    border: 1px solid var(--line); border-radius: 10px; padding: 0; width: min(440px, calc(100vw - 32px));
+    background: var(--surface); color: var(--ink);
+  }
+  dialog::backdrop { background: rgba(10, 20, 20, .5); }
+  .dlg-body { padding: 22px; }
+  .dlg-body h2 { margin: 0 0 16px; font-size: 1.25rem; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-weight: 500; margin-bottom: 4px; }
+  .field input, .field select { width: 100%; }
+  .field input[readonly] { color: var(--muted); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .error { color: var(--danger); min-height: 1.4em; margin: 0 0 10px; font-weight: 500; }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px);
+    background: var(--ink); color: var(--paper); padding: 10px 18px; border-radius: 6px;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Student records</h1>
+      <p class="sub">Add students, update marks and manage registration.</p>
+    </div>
+    <button class="btn primary" id="addBtn">Add student</button>
+  </header>
+
+  <section class="stats" aria-label="Summary">
+    <dl>
+      <div class="stat"><dt>Students</dt><dd id="sTotal">0</dd></div>
+      <div class="stat"><dt>Registered</dt><dd id="sReg">0</dd></div>
+      <div class="stat"><dt>Not registered</dt><dd id="sUnreg">0</dd></div>
+      <div class="stat"><dt>Class average</dt><dd id="sAvg">0</dd></div>
+    </dl>
+  </section>
+
+  <div class="layout">
+    <section class="panel" aria-label="Student register">
+      <div class="toolbar">
+        <input type="search" id="search" placeholder="Search by name, admission number or programme" aria-label="Search students">
+        <select id="filter" aria-label="Filter by registration">
+          <option value="all">All students</option>
+          <option value="reg">Registered</option>
+          <option value="unreg">Not registered</option>
+        </select>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Admission no.</th><th>Name</th><th>Programme</th>
+              <th class="num">Year</th><th class="num">Average</th><th>Grade</th>
+              <th>Registration</th><th><span class="sr" style="position:absolute;left:-9999px">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty" hidden></div>
+    </section>
+
+    <aside class="panel side" aria-label="GPA calculator">
+      <h2>GPA calculator</h2>
+      <p>Enter letter grades separated by spaces.</p>
+      <label for="grades">Grades</label>
+      <input id="grades" placeholder="A B C A">
+      <button class="btn primary" id="gpaBtn">Calculate GPA</button>
+      <div class="result" id="gpaResult" aria-live="polite"></div>
+      <div class="scale">
+        <h3>Current grade scale</h3>
+        <dl id="scale"></dl>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <form id="form" class="dlg-body" novalidate>
+    <h2 id="dlgTitle">Add student</h2>
+    <div class="field"><label for="f_adm">Admission number</label><input id="f_adm" placeholder="CS/2022/001" required></div>
+    <div class="field"><label for="f_name">Full name</label><input id="f_name" required></div>
+    <div class="field"><label for="f_prog">Programme</label><input id="f_prog" placeholder="BSc Computer Science" required></div>
+    <div class="row">
+      <div class="field"><label for="f_year">Year of study</label>
+        <select id="f_year"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+      </div>
+      <div class="field"><label for="f_mark">Average mark (0-100)</label><input id="f_mark" type="number" min="0" max="100" step="0.1" value="0"></div>
+    </div>
+    <p class="error" id="formError" role="alert"></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn" id="cancelBtn">Cancel</button>
+      <button type="submit" class="btn primary" id="saveBtn">Save student</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let students = [];
+let editingId = null;
+
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') n.className = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  kids.flat().forEach((c) => n.append(c));
+  return n;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function load() {
+  try {
+    const [list, stats] = await Promise.all([api('/api/students'), api('/api/stats')]);
+    students = list;
+    $('#sTotal').textContent = stats.total;
+    $('#sReg').textContent = stats.registered;
+    $('#sUnreg').textContent = stats.not_registered;
+    $('#sAvg').textContent = stats.class_average.toFixed(1);
+    render();
+  } catch (e) {
+    toast('Could not load students. Is server.py running?');
+  }
+}
+
+function visible() {
+  const q = $('#search').value.trim().toLowerCase();
+  const f = $('#filter').value;
+  return students.filter((s) => {
+    if (f === 'reg' && !s.registered) return false;
+    if (f === 'unreg' && s.registered) return false;
+    if (!q) return true;
+    return [s.admission_number, s.name, s.programme].some((v) => v.toLowerCase().includes(q));
+  });
+}
+
+function render() {
+  const rows = $('#rows');
+  rows.replaceChildren();
+  const list = visible();
+  const empty = $('#empty');
+
+  if (list.length === 0) {
+    empty.hidden = false;
+    empty.replaceChildren();
+    if (students.length === 0) {
+      empty.append(el('p', {}, 'No students yet. Add the first student to start the register.'),
+        el('button', { class: 'btn primary', onclick: () => openDialog() }, 'Add student'));
+    } else {
+      empty.append(el('p', {}, 'No students match your search or filter.'));
+    }
+    return;
+  }
+  empty.hidden = true;
+
+  list.forEach((s) => {
+    rows.append(el('tr', {},
+      el('td', { class: 'adm' }, s.admission_number),
+      el('td', { class: 'name' }, s.name),
+      el('td', {}, s.programme),
+      el('td', { class: 'num' }, String(s.year_of_study)),
+      el('td', { class: 'num' }, s.average_mark.toFixed(1)),
+      el('td', {}, el('span', { class: 'grade ' + s.grade }, s.grade)),
+      el('td', {}, el('button', {
+        class: 'status',
+        'aria-pressed': String(s.registered),
+        title: s.registered ? 'Click to deregister' : 'Click to register',
+        onclick: () => toggleRegistration(s),
+      }, s.registered ? 'Registered' : 'Not registered')),
+      el('td', {}, el('div', { class: 'actions' },
+        el('button', { class: 'btn small', onclick: () => openDialog(s) }, 'Edit'),
+        el('button', { class: 'btn small danger', onclick: () => removeStudent(s) }, 'Remove'),
+      )),
+    ));
+  });
+}
+
+async function toggleRegistration(s) {
+  try {
+    await api('/api/student/registration?id=' + encodeURIComponent(s.admission_number),
+      { method: 'POST', body: { registered: !s.registered } });
+    toast(s.registered ? 'Student deregistered' : 'Student registered');
+    load();
+  } catch (e) { toast(e.message); }
+}
+
+async function removeStudent(s) {
+  if (!confirm(`Remove ${s.name} (${s.admission_number})? This cannot be undone.`)) return;
+  try {
+    await api('/api/student?id=' + encodeURIComponent(s.admission_number), { method: 'DELETE' });
+    toast('Student removed');
+    load();
+  } catch (e) { toast(e.message); }
+}
+
+/* Add / edit dialog */
+const dlg = $('#dlg');
+function openDialog(s = null) {
+  editingId = s ? s.admission_number : null;
+  $('#dlgTitle').textContent = s ? 'Edit student' : 'Add student';
+  $('#saveBtn').textContent = s ? 'Save changes' : 'Save student';
+  $('#f_adm').value = s ? s.admission_number : '';
+  $('#f_adm').readOnly = !!s;
+  $('#f_name').value = s ? s.name : '';
+  $('#f_prog').value = s ? s.programme : '';
+  $('#f_year').value = s ? s.year_of_study : '1';
+  $('#f_mark').value = s ? s.average_mark : '0';
+  $('#formError').textContent = '';
+  dlg.showModal();
+  (s ? $('#f_name') : $('#f_adm')).focus();
+}
+
+$('#addBtn').addEventListener('click', () => openDialog());
+$('#cancelBtn').addEventListener('click', () => dlg.close());
+
+$('#form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    admission_number: $('#f_adm').value,
+    name: $('#f_name').value,
+    programme: $('#f_prog').value,
+    year_of_study: $('#f_year').value,
+    average_mark: $('#f_mark').value,
+  };
+  try {
+    if (editingId) {
+      await api('/api/student?id=' + encodeURIComponent(editingId), { method: 'PUT', body });
+    } else {
+      await api('/api/students', { method: 'POST', body });
+    }
+    dlg.close();
+    toast(editingId ? 'Changes saved' : 'Student added');
+    load();
+  } catch (err) {
+    $('#formError').textContent = err.message;
+  }
+});
+
+/* Search and filter */
+$('#search').addEventListener('input', render);
+$('#filter').addEventListener('change', render);
+
+/* GPA calculator */
+async function calcGpa() {
+  const grades = $('#grades').value.split(/[\s,]+/).filter(Boolean);
+  const out = $('#gpaResult');
+  if (grades.length === 0) { out.textContent = 'Enter at least one grade.'; return; }
+  try {
+    const r = await api('/api/gpa', { method: 'POST', body: { grades } });
+    out.textContent = 'GPA: ' + r.gpa.toFixed(2);
+  } catch (e) { out.textContent = e.message; }
+}
+$('#gpaBtn').addEventListener('click', calcGpa);
+$('#grades').addEventListener('keydown', (e) => { if (e.key === 'Enter') calcGpa(); });
+
+async function loadScale() {
+  try {
+    const scale = await api('/api/grades');
+    const dl = $('#scale');
+    dl.replaceChildren();
+    Object.entries(scale).forEach(([g, p]) => {
+      dl.append(el('dt', {}, g), el('dd', {}, p.toFixed(1)));
+    });
+  } catch (e) { /* scale is optional */ }
+}
+
+load();
+loadScale();
+</script>
+</body>
+</html>
